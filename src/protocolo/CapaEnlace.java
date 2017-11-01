@@ -152,7 +152,7 @@ public class CapaEnlace {
                         frameConfirmacion.seq = 0;
                         enviar_capa_fisica(frameConfirmacion); //Enviar la confirmacion a la capa fisica
                     }
-                    if(frameRecibido.info.equals("###")){
+                    if(frameRecibido.info.equals("###")){ //Recibio la confirmacion
                         eventoEnviar = EVENT_FRAME_ARRIVAL;
                     }
 
