@@ -31,9 +31,9 @@ public class CapaFisica extends Thread {
             portId = (CommPortIdentifier) portList.nextElement();
             if (portId.getPortType() == CommPortIdentifier.PORT_SERIAL && portId.getName().equalsIgnoreCase(nombrePuerto)) {
                 try {
-                    this.puertoSerie = (SerialPort) portId.open("PruebaProtocolo", 1971);
-                    this.puertoSerie.setFlowControlMode(SerialPort.FLOWCONTROL_RTSCTS_IN);
-                    this.puertoSerie.setSerialPortParams(19200, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
+                    this.puertoSerie = (SerialPort) portId.open("PruebaProtocolo", 1971); // params: appname, timeout
+                    this.puertoSerie.setFlowControlMode(SerialPort.FLOWCONTROL_RTSCTS_IN); // Request to Send / Clear to Send
+                    this.puertoSerie.setSerialPortParams(19200, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE); //params: baudrate, dataBits, stopBits, parity
                 } catch (Exception ex) {
                     Logger.getLogger(Protocolo.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -51,7 +51,7 @@ public class CapaFisica extends Thread {
     }
 
     private void enviar(String secuencia) {
-        String secFisica = "~" + secuencia + "~";
+        String secFisica = "~" + secuencia + "~"; // Para verificar inicio y fin 
         System.out.println("SECUENCIA A ENVIAR - - -> " + secFisica);
         char[] secuenciaBits = secFisica.toCharArray();
         try {
@@ -70,6 +70,7 @@ public class CapaFisica extends Thread {
 
     @Override
     public void run() { //REPRESENTA AL RECIBIR!!!!!
+        // Esta escuchando si llega algo
         while (true) {
             try {
                 String confirmacion = "";
@@ -79,16 +80,16 @@ public class CapaFisica extends Thread {
                 int c = inStream.read();
                 boolean control = true;
                 boolean seg = false;
-                while (c != -1 && control) {
+                while (c != -1 && control) { // Si hay algo en el buffer
                     char ch = (char) c;
                     response = response + ch;
                     if (ch == '~') {
-                        if (seg) {
+                        if (seg) { // Ultimo caracter
                             control = false;
                             confirmacion = guardarTrama(response);
                             System.out.println("CONFIRMACION");
                             capaEnlace.eventoRecibir = "FRAME_ARRIVAL";
-                        }else{
+                        }else{ // Primer caracter
                             c = inStream.read();
                         }
                         seg = true;                        
