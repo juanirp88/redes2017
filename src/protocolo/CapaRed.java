@@ -20,7 +20,7 @@ public class CapaRed {
     }
     
     public void iniciar(){
-        this.capaEnlace.iniciarRecibir();
+        this.capaEnlace.iniciarRecibir(); // Inicia el hilo en la capa de enlace que espera para recibir
     }
     public Paquete getSiguientePaquete() {
         Paquete retorno = new Paquete();

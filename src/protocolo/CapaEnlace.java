@@ -27,7 +27,9 @@ public class CapaEnlace {
 
     public void configurar(CapaRed capR, String nombrePuerto) {
         this.capaFisica = new CapaFisica(this, nombrePuerto);
-        this.capaFisica.start(); // Manejo de Threads, ejecuta el metodo run()
+
+        this.capaFisica.start(); //Inicia el run() de la capa fisica
+
         this.capaRed = capR;
     }
 
@@ -125,15 +127,14 @@ public class CapaEnlace {
         public void run() {
             Trama frameRecibido = new Trama(); //Define la variable a recibir
             Trama frameConfirmacion = new Trama();//define una variable de trabajo
-            System.out.println("-esta en recibir");
+
             int frame_expected = 0;
             while (true) {
-                wait_for_event_recibir(EVENT_ESPERANDO);
-                if (eventoRecibir.equals(EVENT_FRAME_ARRIVAL)) {
-                    frameRecibido = obtener_trama_capa_fisica(); //obtengo la capa fisica
-                    System.out.println("paso el wait");
+                wait_for_event_recibir(EVENT_ESPERANDO); //Sleep
+                if (eventoRecibir.equals(EVENT_FRAME_ARRIVAL)) { //Estan llegando datos
+                    frameRecibido = obtener_trama_capa_fisica();
                     if (frameRecibido.seq == frame_expected && !frameRecibido.info.equals("###")) {
-                        boolean validacion = verificar_suma(frameRecibido);
+                        boolean validacion = verificar_suma(frameRecibido);// ToDo
                         System.out.println("ENCABEZADO: " + frameRecibido.encabezado);
                         System.out.println("SEQ: " + frameRecibido.seq);
                         System.out.println("ASK: " + frameRecibido.ack);
@@ -151,9 +152,9 @@ public class CapaEnlace {
                         frameConfirmacion.sumaVerificacion = calcular_suma_verificacion(frameConfirmacion.info);
                         System.out.println(frameConfirmacion.sumaVerificacion +" es la suma antes de enviar" );
                         frameConfirmacion.seq = 0;
-                        enviar_capa_fisica(frameConfirmacion);
+                        enviar_capa_fisica(frameConfirmacion); //Enviar la confirmacion a la capa fisica
                     }
-                    if(frameRecibido.info.equals("###")){
+                    if(frameRecibido.info.equals("###")){ //Recibio la confirmacion
                         eventoEnviar = EVENT_FRAME_ARRIVAL;
                     }
 
@@ -196,14 +197,14 @@ private String calcular_suma_verificacion(String m) {
                 suma = suma + "0";
             }
         }
-        System.out.println("CRC32:" + crc32Checksum + " para: " + file);
+        System.out.println("CRC32: " + suma + " para: " + file);
         
         
 return suma;
 
 }
 
-    private void enviar_paquete_capa_red(String info) {
+    private void enviar_paquete_capa_red(String info) { //Muestra el paquete recibido
         Paquete paquete = new Paquete();
         paquete.data = info;
         capaRed.setPaquete(paquete);

@@ -262,7 +262,7 @@ public class Terminal extends javax.swing.JFrame {
         }
     }
     
-    public void actualizarVentana(String add){
+    public void actualizarVentana(String add){ //Muestra el paquete recibido
         this.taVentana.setText(add);
     }
 }
