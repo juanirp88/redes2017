@@ -2,9 +2,7 @@ package protocolo;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.swing.SwingWorker;
+import java.util.zip.CRC32;
 import javax.swing.Timer;
 
 public class CapaEnlace {
@@ -29,7 +27,7 @@ public class CapaEnlace {
 
     public void configurar(CapaRed capR, String nombrePuerto) {
         this.capaFisica = new CapaFisica(this, nombrePuerto);
-        this.capaFisica.start();
+        this.capaFisica.start(); // Manejo de Threads, ejecuta el metodo run()
         this.capaRed = capR;
     }
 
@@ -115,7 +113,7 @@ public class CapaEnlace {
                 control = false;
             }
             try {
-                Thread.sleep(50);
+                Thread.sleep(100);
             } catch (InterruptedException ex) {
                 System.out.println("FALLO EL THREAD DEL WAITFOREVENT");
             }
@@ -123,15 +121,17 @@ public class CapaEnlace {
     }
 
     class Recibir extends Thread {
-
+// Hilo encargado de recibir las tramas
         public void run() {
             Trama frameRecibido = new Trama(); //Define la variable a recibir
             Trama frameConfirmacion = new Trama();//define una variable de trabajo
+            System.out.println("-esta en recibir");
             int frame_expected = 0;
             while (true) {
                 wait_for_event_recibir(EVENT_ESPERANDO);
                 if (eventoRecibir.equals(EVENT_FRAME_ARRIVAL)) {
-                    frameRecibido = obtener_trama_capa_fisica();
+                    frameRecibido = obtener_trama_capa_fisica(); //obtengo la capa fisica
+                    System.out.println("paso el wait");
                     if (frameRecibido.seq == frame_expected && !frameRecibido.info.equals("###")) {
                         boolean validacion = verificar_suma(frameRecibido);
                         System.out.println("ENCABEZADO: " + frameRecibido.encabezado);
@@ -148,7 +148,8 @@ public class CapaEnlace {
                         frameConfirmacion.encabezado = "01111110";
                         frameConfirmacion.cola = "01111110";
                         frameConfirmacion.info = "###"; //Inicializa la carga util de la trama
-                        frameConfirmacion.sumaVerificacion = calcular_suma_verificacion("");
+                        frameConfirmacion.sumaVerificacion = calcular_suma_verificacion(frameConfirmacion.info);
+                        System.out.println(frameConfirmacion.sumaVerificacion +" es la suma antes de enviar" );
                         frameConfirmacion.seq = 0;
                         enviar_capa_fisica(frameConfirmacion);
                     }
@@ -176,9 +177,31 @@ public class CapaEnlace {
         }
     }
 
-    private String calcular_suma_verificacion(String data) {
-        return "01010101";
-    }
+private String calcular_suma_verificacion(String m) {
+
+        String file = m;
+
+    
+        byte data[] = file.getBytes();
+
+           // Compute CRC32 checksum
+        CRC32 crc = new CRC32();
+        crc.update(data);
+
+        long crc32Checksum = crc.getValue();
+        
+        String suma = String.valueOf(crc32Checksum);
+        if(suma.length()<10){ //controlo que siempre sea 10 el checksum completo con 0
+            for (int i = 0; i < 10- suma.length(); i++) {
+                suma = suma + "0";
+            }
+        }
+        System.out.println("CRC32:" + crc32Checksum + " para: " + file);
+        
+        
+return suma;
+
+}
 
     private void enviar_paquete_capa_red(String info) {
         Paquete paquete = new Paquete();
@@ -187,6 +210,20 @@ public class CapaEnlace {
     }
 
     private boolean verificar_suma(Trama frameRecibido) {
+        
+        
+        
+                String crcRecibido = frameRecibido.sumaVerificacion;
+                
+                String crcCalculado = calcular_suma_verificacion(frameRecibido.info);
+                
+                if(crcCalculado.equalsIgnoreCase(crcRecibido)){
+                    
         return true;
+                }
+                
+                else{
+                    return false;
+                }
     }
 }

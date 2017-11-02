@@ -32,8 +32,13 @@ public class CapaFisica extends Thread {
             if (portId.getPortType() == CommPortIdentifier.PORT_SERIAL && portId.getName().equalsIgnoreCase(nombrePuerto)) {
                 try {
                     this.puertoSerie = (SerialPort) portId.open("PruebaProtocolo", 1971);
+                    /*
+                    Al método idPuerto.open, hay que pasarle dos parámetros. 
+                    Un cadena que describe al propietario del puerto (puede ser el nombre de nuestra aplicación), y el tiempo en milisegundos
+                    que se esperará por un puerto bloqueado antes de lanzar la excepción de puerto en uso (en este caso, dos segundos).
+                    */
                     this.puertoSerie.setFlowControlMode(SerialPort.FLOWCONTROL_RTSCTS_IN);
-                    this.puertoSerie.setSerialPortParams(19200, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
+                    this.puertoSerie.setSerialPortParams(19200, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_ODD); // Se configuran los parametros
                 } catch (Exception ex) {
                     Logger.getLogger(Protocolo.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -43,6 +48,7 @@ public class CapaFisica extends Thread {
 
     public void setTramaEnviar(Trama frame) {
         String secuenciaBits = frame.encabezado + String.valueOf(frame.seq) + String.valueOf(frame.ack) + frame.info + frame.sumaVerificacion + frame.cola;
+        System.out.println("trama a enviar " + secuenciaBits );
         enviar(secuenciaBits);
     }
 
@@ -69,31 +75,33 @@ public class CapaFisica extends Thread {
     }
 
     @Override
-    public void run() { //REPRESENTA AL RECIBIR!!!!!
+    public void run() { //REPRESENTA AL RECIBIR
         while (true) {
             try {
                 String confirmacion = "";
-                System.out.println("RECIBE");
+                System.out.println("Listo Para Recibir");
                 inStream = this.puertoSerie.getInputStream();
                 String response = "";
-                int c = inStream.read();
+                int c = inStream.read(); // lee el primer byte en ascii
                 boolean control = true;
                 boolean seg = false;
                 while (c != -1 && control) {
                     char ch = (char) c;
                     response = response + ch;
+      
                     if (ch == '~') {
                         if (seg) {
                             control = false;
                             confirmacion = guardarTrama(response);
                             System.out.println("CONFIRMACION");
-                            capaEnlace.eventoRecibir = "FRAME_ARRIVAL";
+                            capaEnlace.eventoRecibir = "FRAME_ARRIVAL"; // al eventoRecibir le asigna FRAME_ARRIVAL
                         }else{
                             c = inStream.read();
                         }
                         seg = true;                        
                     }else{
                         c = inStream.read();
+
                     }
                     System.out.println("Respuesta: " + response);     
                     
@@ -106,13 +114,16 @@ public class CapaFisica extends Thread {
     }
 
     private String guardarTrama(String tramaFisica) {
+        // Lee los componentes del frame
         String trama = tramaFisica.substring(1, tramaFisica.length() - 1);
         System.out.println("SECUENCIA RECIBIDA!");
         this.frame.encabezado = trama.substring(0, 8);
         this.frame.seq = Integer.parseInt(trama.substring(8, 9));
         this.frame.ack = Integer.parseInt(trama.substring(9, 10));
-        this.frame.info = trama.substring(10, (trama.length() - 16));
+        this.frame.info = trama.substring(10, (trama.length() - 18));
+        this.frame.sumaVerificacion = trama.substring(trama.length() - 18, trama.length() - 8);
         this.frame.cola = trama.substring((trama.length() - 8), trama.length());
+        
         
         return "~"+this.frame.encabezado + this.frame.seq + this.frame.seq +"null"+ this.frame.cola+"~";
     }

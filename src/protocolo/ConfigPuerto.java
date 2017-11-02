@@ -17,7 +17,7 @@ public class ConfigPuerto {
          while (portList.hasMoreElements()){  
              portId = (CommPortIdentifier) portList.nextElement();  
              if (portId.getPortType() == CommPortIdentifier.PORT_SERIAL){  
-                 System.out.println("Found port: " + portId.getName());
+                 System.out.println("Se encotro el puerto: " + portId.getName());
                  retorno.add(portId.getName());
              }    
        }  
