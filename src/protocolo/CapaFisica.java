@@ -53,14 +53,13 @@ public class CapaFisica extends Thread {
 
     private void enviar(String secuencia) {
         String secFisica = "~" + secuencia + "~"; // Para verificar inicio y fin 
-        System.out.println("SECUENCIA A ENVIAR - - -> " + secFisica);
+        System.out.println("Secuencia a enviar - - -> " + secFisica);
         char[] secuenciaBits = secFisica.toCharArray();
         try {
             outStream = this.puertoSerie.getOutputStream();
             for (int i = 0; i < secuenciaBits.length; i++) {
                 char bit = secuenciaBits[i];
-                System.out.println("DETALLE ENVIO");
-                System.out.println(bit);
+                System.out.println("Enviado: " + bit);
                 outStream.write(bit);
             }
         } catch (IOException ex) {
@@ -103,10 +102,10 @@ public class CapaFisica extends Thread {
                         c = inStream.read();
 
                     }
-                    System.out.println("Respuesta: " + response);     
+                
                     
                 }                
-
+            System.out.println("Respuesta: " + response);   
             } catch (IOException ex) {
                 Logger.getLogger(CapaFisica.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -116,7 +115,7 @@ public class CapaFisica extends Thread {
     private String guardarTrama(String tramaFisica) {
         // Lee los componentes del frame
         String trama = tramaFisica.substring(1, tramaFisica.length() - 1);
-        System.out.println("SECUENCIA RECIBIDA!");
+        System.out.println("Se recibio la secuencia");
         this.frame.encabezado = trama.substring(0, 8);
         this.frame.seq = Integer.parseInt(trama.substring(8, 9));
         this.frame.ack = Integer.parseInt(trama.substring(9, 10));

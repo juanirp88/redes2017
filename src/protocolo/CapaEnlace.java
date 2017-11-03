@@ -180,10 +180,10 @@ public class CapaEnlace {
 
 private String calcular_suma_verificacion(String m) {
 
-        String file = m;
+        String datos = m;
 
     
-        byte data[] = file.getBytes();
+        byte data[] = datos.getBytes();
 
            // Compute CRC32 checksum
         CRC32 crc = new CRC32();
@@ -197,7 +197,7 @@ private String calcular_suma_verificacion(String m) {
                 suma = suma + "0";
             }
         }
-        System.out.println("CRC32: " + suma + " para: " + file);
+        System.out.println("CRC32: " + suma + " para: " + datos);
         
         
 return suma;
