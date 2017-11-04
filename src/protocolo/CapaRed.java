@@ -40,6 +40,7 @@ public class CapaRed {
         p.data = info;
         paquete = p;
         enviar = capaEnlace.iniciarEnviar();
+ 
     }
 
     void setPaquete(Paquete paquete) {

@@ -7,13 +7,14 @@ import javax.swing.Timer;
 
 public class CapaEnlace {
 
-    private static int max_seq = 2;
+    private static int max_seq = 7; // tiene que  ser 2^n – 1 
     public static final String EVENT_ESPERANDO = "ESPERANDO";
     public static final String EVENT_FRAME_ARRIVAL = "FRAME_ARRIVAL";
     public static final String EVENT_CKSUM_ERR = "CKSUM_ERR";
     public static final String EVENT_TIMEOUT = "TIMEOUT";
     //Variables para enviar
     int next_frame_to_send = 0;
+     int frame_expected  = 0;
     public String eventoEnviar;
     private int seq_vencida;
     private int seq_enviada;
@@ -64,13 +65,16 @@ public class CapaEnlace {
                 frame.info = buffer.data; //Inicializa la carga util de la trama
                 frame.sumaVerificacion = calcular_suma_verificacion(buffer.data);
                 frame.seq = next_frame_to_send; //Inicializa el numero de secuencia que envia
+                frame.ack =   frame_expected;
                 enviar_capa_fisica(frame); //Envia la trama a la capa fisica
+                
                 Timer timer = start_timer(frame.seq);  //Inicializa el temporizador para el num de secuencia
                 wait_for_event_enviar(EVENT_ESPERANDO); //Deja al metodo esperando por un evento distinto a ESPERANDO
+      
                 if (eventoEnviar.equals(EVENT_FRAME_ARRIVAL)) { //Si el evento recibido es FRAME_ARRIVAL
                     System.out.println("ENTRO AL FRAME ARRIVAL");
                     Trama frameRecibido = obtener_trama_capa_fisica(); //Solicita a la capa fisica la trama de verificacion
-                    if (frameRecibido.ack == next_frame_to_send) { //Obtiene el ACK y si es el mismo a la trama enviada procede
+                    if (frameRecibido.ack == (next_frame_to_send + 1) % max_seq) { //Obtiene el ACK y si es el mismo a la trama enviada procede
                         timer.stop(); //Detiene el temporizador
                         buffer = obtener_paquete_capa_red(); // Obtiene el siguiente paquete de la capa de red.
                         control = false;
@@ -128,13 +132,12 @@ public class CapaEnlace {
             Trama frameRecibido = new Trama(); //Define la variable a recibir
             Trama frameConfirmacion = new Trama();//define una variable de trabajo
 
-            int frame_expected = 0;
             while (true) {
                 wait_for_event_recibir(EVENT_ESPERANDO); //Sleep
                 if (eventoRecibir.equals(EVENT_FRAME_ARRIVAL)) { //Estan llegando datos
                     frameRecibido = obtener_trama_capa_fisica();
                     if (frameRecibido.seq == frame_expected && !frameRecibido.info.equals("###")) {
-                        boolean validacion = verificar_suma(frameRecibido);// ToDo
+                        boolean validacion = verificar_suma(frameRecibido);
                         System.out.println("ENCABEZADO: " + frameRecibido.encabezado);
                         System.out.println("SEQ: " + frameRecibido.seq);
                         System.out.println("ASK: " + frameRecibido.ack);
@@ -145,7 +148,7 @@ public class CapaEnlace {
                             enviar_paquete_capa_red(frameRecibido.info);
                             frame_expected = (frame_expected + 1) % max_seq;
                         }
-                        frameConfirmacion.ack = (frame_expected + 1) % max_seq;
+                        frameConfirmacion.ack = frame_expected ;
                         frameConfirmacion.encabezado = "01111110";
                         frameConfirmacion.cola = "01111110";
                         frameConfirmacion.info = "###"; //Inicializa la carga util de la trama
@@ -212,19 +215,17 @@ return suma;
 
     private boolean verificar_suma(Trama frameRecibido) {
         
-        
-        
-                String crcRecibido = frameRecibido.sumaVerificacion;
-                
-                String crcCalculado = calcular_suma_verificacion(frameRecibido.info);
-                
-                if(crcCalculado.equalsIgnoreCase(crcRecibido)){
-                    
-        return true;
-                }
-                
-                else{
-                    return false;
-                }
+        String crcRecibido = frameRecibido.sumaVerificacion;
+
+        String crcCalculado = calcular_suma_verificacion(frameRecibido.info);
+
+        if(crcCalculado.equalsIgnoreCase(crcRecibido)){
+
+            return true;
+        }
+
+        else{
+            return false;
+        }
     }
 }
